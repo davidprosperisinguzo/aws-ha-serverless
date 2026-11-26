@@ -8,11 +8,14 @@ build/
 *.zip
 __pycache__/
 .venv/
-.claude
-CLAUDE.md
+#.claude
+#CLAUDE.md
 
 # Terraform
 .terraform/
 *.tfstate
 *.tfstate.backup
+
+# irrelevant files
+#docs/
 

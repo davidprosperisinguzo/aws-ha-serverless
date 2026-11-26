@@ -1,8 +1,18 @@
-# aws-ha-serverless
+# aws-ha-serverless Claude skills
 
-Multi-AZ web app with auto scaling, plus a serverless app on AWS.
+Contains nine project skills under `.claude/skills/`:
+- implementation-guide
+- aws-architecture-review
+- terraform-review
+- tf-scaffold
+- aws-security-review
+- aws-testing-guide
+- screenshot-manager
+- doc-writer
+- final-delivery-review
 
-## Folder Layout
+Extract into the root of the repository, preserving the `.claude/skills/` paths.
+Review existing files before replacing them. The project-level CLAUDE.md remains
+the governing instruction. All project commands and AWS operations remain user-run.
 
-- `ha-web/` - Multi-AZ highly available web application (VPC, ALB, Auto Scaling, NAT gateways)
-- `serverless/` - S3-to-DynamoDB Lambda pipeline with HTTP API (API Gateway, 2 Python Lambdas)
+The included `CLAUDE.md` is the updated project-level instruction file integrating `tf-scaffold` into the end-to-end workflow.

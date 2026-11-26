@@ -1,0 +1,15 @@
+# Serverless Stack - Example Terraform Variables
+# Copy this file to terraform.tfvars and fill in your values
+
+# AWS Account ID (required for Lambda policies)
+aws_account_id = "123456789012"
+
+# Unique suffix for S3 bucket name (must be globally unique)
+unique_suffix = "myuniqueid123"
+
+# Optional: Override defaults
+# project_name     = "aws-ha-serverless"
+# stack_name       = "serverless"
+# environment      = "dev"
+# aws_region       = "eu-west-2"
+# lambda_runtime   = "python3.12"

@@ -1,0 +1,219 @@
+# AWS High Availability and Serverless Architecture Assignment
+
+**David Prosper Isinguzo** | Bincom Dev Center, Infrastructure / Cloud | **2026-11-26**
+
+---
+
+# 1. Task Assigned
+
+Build two independent AWS infrastructure stacks using Terraform:
+
+**Stack 1: HA Web Application (`ha-web/`)**
+- A multi-AZ, highly available web application in eu-west-2.
+- VPC across two Availability Zones with public subnets (ALB, NAT Gateways) and private subnets (application servers).
+- Application Load Balancer distributing traffic.
+- Auto Scaling Group (min 2, max 4) with CPU target-tracking scaling.
+- Instances run a Node.js container from ECR (`nodejs-cicd-app:latest`) on port 3000.
+- Instances managed via AWS Systems Manager (SSM) — no SSH, no key pairs.
+
+**Stack 2: Serverless File Processing (`serverless/`)**
+- S3 upload event triggers a Python Lambda (`ingest`) that records file metadata in DynamoDB.
+- HTTP API (API Gateway) triggers a second Python Lambda (`api`) that reads from DynamoDB.
+- Endpoints: `GET /files` and `GET /files/{id}`.
+- DynamoDB uses on-demand billing.
+- Python Lambdas use the latest supported runtime.
+
+**Fixed Decisions:**
+- Region: `eu-west-2` (London), 2 Availability Zones.
+- One NAT Gateway per AZ.
+- ECR image: `nodejs-cicd-app:latest` (same account, same region).
+- All stacks must be easy to destroy after screenshots.
+- Provider versions pinned; tags via `default_tags` (`Project = aws-ha-serverless`).
+- IAM: least privilege, no wildcard actions/resources unless AWS requires it.
+- S3 buckets: block public access, use encryption.
+- Lambda code: small, readable, configured via environment variables, no secrets in code.
+
+**Deliverables:**
+- Terraform code for both stacks in separate directories.
+- Working infrastructure deployed to AWS.
+- Screenshots as evidence of implementation.
+- Documentation following the Assignment 2 style guide.
+
+---
+
+# 2. Overview
+
+This project implements two distinct AWS architectures using Terraform:
+
+**Stack 1 — Highly Available Web Application:**
+A production-grade, multi-AZ web application designed for high availability. The architecture spans two Availability Zones in the London region (eu-west-2). Public subnets host the Application Load Balancer and NAT Gateways. Private subnets host the application servers running in an Auto Scaling Group. The application is a containerized Node.js application served from Amazon ECR, managed entirely through AWS Systems Manager without SSH access.
+
+**Stack 2 — Serverless File Processing Pipeline:**
+An event-driven serverless architecture. When a file is uploaded to an S3 bucket, an S3 event notification triggers an `ingest` Lambda function that extracts metadata and stores it in a DynamoDB table. A separate HTTP API (API Gateway) exposes two endpoints served by an `api` Lambda function that reads from the same DynamoDB table.
+
+Both stacks use their own Terraform state and are deployed independently.
+
+**Architecture Flow:**
+
+Stack 1 (HA Web):
+1. User → Application Load Balancer (public subnets)
+2. ALB → Target Group → EC2 instances in Auto Scaling Group (private subnets)
+3. Instances → ECR (pull container image)
+4. Instances → Internet via NAT Gateway (for updates, etc.)
+5. Management → SSM Session Manager (no SSH)
+
+Stack 2 (Serverless):
+1. User uploads file → S3 Bucket
+2. S3 Event → `ingest` Lambda → DynamoDB (store metadata)
+3. User calls API → API Gateway → `api` Lambda → DynamoDB (read metadata)
+4. Response returned via API Gateway
+
+---
+
+# 3. Project Setup and Prerequisites
+
+## What I did
+
+Before creating any infrastructure, I verified the development environment and AWS account readiness.
+
+### Prerequisite Checks
+
+| Tool / Check | Version / Result |
+|--------------|------------------|
+| Terraform | v1.16.2 |
+| AWS CLI | v2.34.4 |
+| Python | 3.14.4 |
+| GitHub CLI | Authenticated (davidprosperisinguzo) |
+| Git user | David Prosper Isinguzo |
+| AWS Account | ******** (masked) |
+| AWS Region | eu-west-2 (London) |
+| ECR Repository `nodejs-cicd-app` | **NOT FOUND** |
+| Availability Zones | eu-west-2a, eu-west-2b, eu-west-2c, eu-west-2d (all available) |
+| Existing VPCs | 1 (default VPC) |
+| Existing Elastic IPs | 0 |
+
+### Project Skeleton
+
+I created the following directory structure with Terraform configuration files:
+
+```
+aws-ha-serverless/
+├── ha-web/
+│   ├── versions.tf
+│   ├── providers.tf
+│   ├── README.md
+│   └── .terraform.lock.hcl
+├── serverless/
+│   ├── versions.tf
+│   ├── providers.tf
+│   ├── README.md
+│   └── .terraform.lock.hcl
+├── .gitignore
+└── README.md
+```
+
+**Configuration details:**
+
+- `versions.tf`: Terraform `>= 1.16.0`, AWS provider `~> 5.0` (pinned to v5.100.0 via lock file).
+- `providers.tf`: Region `eu-west-2`, default tags `Project = aws-ha-serverless`.
+- `.gitignore`: Ignores `.terraform/`, `*.tfstate`, `*.tfstate.backup`, `docs/`; commits `.terraform.lock.hcl`.
+- Both stacks validated with `terraform validate` → **Success**.
+
+**Git:**
+- Committed skeleton with message: "Add project skeleton: ha-web and serverless Terraform stacks with providers and versions"
+- Pushed to `main` branch.
+- Verified: single author/committer (David Prosper Isinguzo), no co-author trailers.
+
+---
+
+### Screenshot Checkpoint 01 — Project Skeleton and Prerequisites
+
+**Implementation milestone:**
+Project skeleton created, prerequisite checks completed, Terraform configurations validated.
+
+**Capture location:**
+1. Terminal showing `terraform version`, `aws sts get-caller-identity`, `aws ec2 describe-availability-zones --region eu-west-2` output.
+2. File tree showing `ha-web/` and `serverless/` directories with their Terraform files.
+3. Git log showing the commit.
+
+**Required visible information:**
+- Terraform version (v1.16.2).
+- AWS Account ID (masked) and region (eu-west-2).
+- List of 4 available AZs in eu-west-2.
+- Directory structure with `versions.tf`, `providers.tf`, `README.md`, `.terraform.lock.hcl` in both stacks.
+- Git commit showing only your name as author/committer.
+
+**Filenames:** `01-project-skeleton-terminal.png`, `01-project-skeleton-git.png`
+
+**Figure captions:**
+
+**Figure 1:** *Terminal output showing prerequisite checks: Terraform v1.16.2, AWS CLI v2.34.4, authenticated GitHub CLI, AWS account and region (eu-west-2), four available AZs in eu-west-2, existing VPCs and Elastic IPs.*
+
+**Figure 2:** *Project directory structure with ha-web/ and serverless/ Terraform stacks, and git log showing single-author commit.*
+
+**Documentation section:** Section 3 — Project Setup and Prerequisites.
+
+**Status:** VERIFIED.
+
+---
+
+![Figure 1: Terminal output showing prerequisite checks](screenshots/01-project-skeleton-terminal.png)
+
+![Figure 2: Project directory structure with ha-web/ and serverless/ Terraform stacks, and git log showing single-author commit](screenshots/01-project-skeleton-git.png)
+
+---
+
+# 4. AWS Networking and Multi-AZ Architecture
+
+*Section pending implementation.*
+
+# 5. Load Balancer and Auto Scaling
+
+*Section pending implementation.*
+
+# 6. Web Application Deployment
+
+*Section pending implementation.*
+
+# 7. Serverless Architecture
+
+*Section pending implementation.*
+
+# 8. Lambda Functions and API Implementation
+
+*Section pending implementation.*
+
+# 9. Testing and Verification
+
+*Section pending implementation.*
+
+# 10. Problems and Fixes
+
+*Section pending implementation.*
+
+# 11. Security Notes
+
+*Section pending implementation.*
+
+# 12. Cost Considerations
+
+*Section pending implementation.*
+
+# 13. Links and Deliverables
+
+- **GitHub Repository:** https://github.com/davidprosperisinguzo/aws-ha-serverless
+- **Infrastructure Code:** `ha-web/` and `serverless/` directories
+- **Architecture Diagram:** To be added
+
+# 14. Conclusion
+
+*To be completed after full implementation.*
+
+---
+
+**Documentation Notes**
+
+- Figure numbering is sequential throughout the document.
+- Screenshots will be inserted as they are captured and verified.
+- Sections 4–8 will be populated as infrastructure is deployed.
+- Evidence statuses: VERIFIED (evidence supplied and reviewed), PENDING (awaiting user screenshot), FAILED (evidence shows failure).
