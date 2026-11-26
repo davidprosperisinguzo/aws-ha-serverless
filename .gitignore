@@ -1,0 +1,10 @@
+# secrets and keys
+*.pem
+*.key
+.env
+
+# Lambda and Python build output
+build/
+*.zip
+__pycache__/
+.venv/
